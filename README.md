@@ -8,7 +8,6 @@ A Golang service that can be customized to mock REST APIs
 - [Usage](#usage)
 - [Configuration](#configuration)
 - [Build](#build)
-  - [Container build](#container-build)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -48,16 +47,3 @@ make build
 ```
 
 The binary will be available in the `out` directory.
-
-### Container build
-
-To build this container with multi-arch support, run the commands below:
-
-```bash
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o api-mock_amd64 ./cmd/api-mock
-CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o api-mock_arm64 ./cmd/api-mock
-docker buildx create --name image-builder
-docker buildx use image-builder
-docker buildx build . --platform linux/amd64,linux/arm64 -t api-mock
-docker buildx rm image-builder
-```
