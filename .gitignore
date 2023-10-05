@@ -30,9 +30,6 @@ go.work
 dist/
 out/
 
-# Local binaries
-api-mock
-
 # IDEs
 .vscode/
 
