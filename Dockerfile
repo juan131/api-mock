@@ -2,7 +2,7 @@ FROM gcr.io/distroless/static-debian11:latest
 LABEL maintainer "Juan Ariza <jariza@vmware.com>"
 
 ARG TARGETARCH
-COPY distapi-mock_linux_${TARGETARCH}*/api-mock /usr/local/bin/
+COPY dist/api-mock_linux_${TARGETARCH}*/api-mock /usr/local/bin/
 
 # by default, use a non-root (non-privileged) UID to run the container
 USER 1001
