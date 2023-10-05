@@ -1,0 +1,40 @@
+project_name: api-mock
+env:
+  - CGO_ENABLED=0
+builds:
+  - binary: api-mock
+    id: api-mock
+    main: ./cmd/api-mock
+    ldflags:
+      - -X main.VERSION={{ .Version }}
+    targets:
+      - darwin_amd64
+      - darwin_arm64
+      - linux_amd64
+      - linux_arm64
+      - linux_arm
+      - windows_amd64
+archives:
+  - builds:
+      - api-mock
+    name_template: "api-mock-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+checksum:
+  algorithm: sha256
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^examples:'
+release:
+  name_template: "{{ .ProjectName }}-v{{ .Version }}"
+  header: |
+    ## v{{ .Version }} ({{ .Date }})
+
+    New v{{ .Version }} release!
+  footer: |
+    ## Release Notes
+
+    Please read the [RELEASE_NOTES](https://github.com/juan131/api-mock/blob/main/RELEASE-NOTES.md) which contain among other things important information for who is upgrading from previous releases.
+
+    ## Thanks!
