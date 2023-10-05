@@ -19,7 +19,7 @@ Run the API mock using Docker:
 docker run --rm -p 8080:8080 juanariza131/api-mock
 ```
 
-The API mock will be available at `http://localhost:8080`.
+The API mock will be available at `http://localhost:8080/v1/mock`.
 
 ## Configuration
 
