@@ -50,6 +50,7 @@ func TestBearerTokenAuth(t *testing.T) {
 			recorder := httptest.NewRecorder()
 			r.ServeHTTP(recorder, req)
 			res := recorder.Result()
+			defer res.Body.Close()
 
 			if res.StatusCode != test.want {
 				tt.Errorf("response status code is incorrect, got %d, want %d", res.StatusCode, test.want)
