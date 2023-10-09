@@ -42,6 +42,7 @@ type service struct {
 // SvcConfig is the service configuration
 type SvcConfig struct {
 	port                 int                    // server listening port
+	apiToken             string                 // api token
 	methods, subRoutes   []string               // supported sub-routes
 	failureCode          int                    // response code for failed requests
 	failureRespBody      map[string]interface{} // response body for failed requests
@@ -79,7 +80,9 @@ func Make(cfg *SvcConfig) Service {
 //nolint:cyclop // many env variables to parse
 func LoadConfigFromEnv() (*SvcConfig, error) {
 	var err error
-	svc := SvcConfig{}
+	svc := SvcConfig{
+		apiToken: os.Getenv("API_TOKEN"),
+	}
 
 	portENV := os.Getenv("PORT")
 	if portENV != "" {

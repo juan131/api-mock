@@ -28,6 +28,7 @@ The API mock can be configured with the following environment variables:
 | Variable | Description | Default |
 | -------- | ----------- | ------- |
 | `PORT` | The port to listen on | `8080` |
+| `API_TOKEN` | Bearer token to authenticate requests | `` |
 | `FAILURE_RESP_BODY` | The response body to return when mocking a failure | `{"success": "false"}` |
 | `FAILURE_RESP_CODE` | The HTTP status code to return when mocking a failure | `400` |
 | `SUCCESS_RESP_BODY` | The response body to return when mocking a success | `{"success": "true"}` |
