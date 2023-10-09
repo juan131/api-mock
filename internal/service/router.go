@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/render"
 
 	"github.com/juan131/api-mock/internal/logger"
+	"github.com/juan131/api-mock/pkg/authn"
 )
 
 const uriPrefix string = "/v1/mock"
@@ -48,6 +49,9 @@ func (svc *service) MakeRouter() {
 	// Endpoints handled by the service
 	router.Route(uriPrefix, func(r chi.Router) {
 		r.Use(logger.RequestLogger())
+		if svc.cfg.apiToken != "" {
+			r.Use(authn.BearerTokenAuth(svc.cfg.apiToken))
+		}
 		r.Use(httprate.Limit(
 			svc.cfg.rateLimit, // requests
 			time.Second,       // per duration

@@ -8,7 +8,7 @@ import (
 
 func Test_LoadConfigFromEnv(t *testing.T) {
 	type env struct {
-		port, failureRespCode, failureRespBody, successRespCode, successRespBody, successRatio, rateLimit, rateExceededRespBody, methods, subRoutes string
+		port, apiToken, failureRespCode, failureRespBody, successRespCode, successRespBody, successRatio, rateLimit, rateExceededRespBody, methods, subRoutes string
 	}
 	tests := []struct {
 		name    string
@@ -34,6 +34,7 @@ func Test_LoadConfigFromEnv(t *testing.T) {
 			name: "Valid configuration",
 			env: env{
 				port:                 "8080",
+				apiToken:             "some-token",
 				failureRespCode:      "400",
 				failureRespBody:      `{"success": false}`,
 				successRespCode:      "200",
@@ -46,6 +47,7 @@ func Test_LoadConfigFromEnv(t *testing.T) {
 			},
 			want: &SvcConfig{
 				port:                 8080,
+				apiToken:             "some-token",
 				failureCode:          http.StatusBadRequest,
 				failureRespBody:      map[string]interface{}{"success": false},
 				successCode:          http.StatusOK,
@@ -134,6 +136,7 @@ func Test_LoadConfigFromEnv(t *testing.T) {
 		test := testToRun
 		t.Run(test.name, func(tt *testing.T) {
 			tt.Setenv("PORT", test.env.port)
+			tt.Setenv("API_TOKEN", test.env.apiToken)
 			tt.Setenv("FAILURE_RESP_CODE", test.env.failureRespCode)
 			tt.Setenv("FAILURE_RESP_BODY", test.env.failureRespBody)
 			tt.Setenv("SUCCESS_RESP_CODE", test.env.successRespCode)
