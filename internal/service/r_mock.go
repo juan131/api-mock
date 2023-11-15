@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-chi/render"
 
-	"github.com/juan131/api-mock/internal/logger"
 	"github.com/juan131/api-mock/pkg/api"
 )
 
@@ -47,27 +46,27 @@ func (svc *service) handleBatchMock(w http.ResponseWriter, r *http.Request) {
 
 	encodedBody, err := io.ReadAll(r.Body)
 	if err != nil {
-		logID := logger.RequestFailure(r, fmt.Sprintf("[handleBatchMock] body reading error: %+v", err), err)
+		logID := svc.LogRequestFailure(r, fmt.Sprintf("[handleBatchMock] body reading error: %+v", err), err)
 		renderJSON(w, r, http.StatusBadRequest, api.MakeHTTPErrorResponse("body parsing error", 1001, logID))
 		return
 	}
 
 	decodedBody, err := url.ParseQuery(string(encodedBody))
 	if err != nil {
-		logID := logger.RequestFailure(r, fmt.Sprintf("[handleBatchMock] body reading error: %+v", err), err)
+		logID := svc.LogRequestFailure(r, fmt.Sprintf("[handleBatchMock] body reading error: %+v", err), err)
 		renderJSON(w, r, http.StatusBadRequest, api.MakeHTTPErrorResponse("body parsing error", 1001, logID))
 		return
 	}
 
 	if err := json.Unmarshal([]byte(decodedBody.Get("batch")), &requests); err != nil {
-		logID := logger.RequestFailure(r, fmt.Sprintf("[handleBatchMock] body reading error: %+v", err), err)
+		logID := svc.LogRequestFailure(r, fmt.Sprintf("[handleBatchMock] body reading error: %+v", err), err)
 		renderJSON(w, r, http.StatusBadRequest, api.MakeHTTPErrorResponse("body parsing error", 1001, logID))
 		return
 	}
 
 	responses := make([]api.BatchResponse, 0, len(requests))
 	for _, r := range requests {
-		logger.Info("Individual request: %v", r)
+		svc.logger.Info(fmt.Sprintf("Individual request: %v", r))
 		if shouldFail(svc.cfg.successRatio, svc.reqCounter) {
 			body, err := json.Marshal(svc.cfg.failureRespBody)
 			if err != nil {
