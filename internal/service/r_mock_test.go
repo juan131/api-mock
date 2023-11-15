@@ -23,6 +23,7 @@ func Test_service_handleMock(t *testing.T) {
 			methods:         []string{http.MethodGet},
 			subRoutes:       []string{"/foo"},
 		},
+		logger: newStructuredLogger(),
 	}
 
 	tests := []struct {
@@ -128,6 +129,7 @@ func Test_service_handleBatchMock(t *testing.T) {
 			methods:         []string{http.MethodGet},
 			subRoutes:       []string{"/foo"},
 		},
+		logger: newStructuredLogger(),
 	}
 
 	tests := []struct {
