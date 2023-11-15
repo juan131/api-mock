@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,8 +15,6 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
-
-	"github.com/juan131/api-mock/internal/logger"
 )
 
 const (
@@ -33,10 +32,11 @@ type Service interface {
 }
 
 type service struct {
-	cfg        *SvcConfig // service configuration
-	router     *chi.Mux   // http router
-	reqCounter int        // request counter
-	mu         sync.Mutex // Mutual exclusion lock
+	cfg        *SvcConfig   // service configuration
+	router     *chi.Mux     // http router
+	reqCounter int          // request counter
+	mu         sync.Mutex   // Mutual exclusion lock
+	logger     *slog.Logger // logger
 }
 
 // SvcConfig is the service configuration
@@ -61,17 +61,18 @@ func (svc *service) ListenAndServe() {
 		Handler:           svc.router,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
-	logger.Info("service attempting to listen on port %d", svc.cfg.port)
-	err := listenAndShutdown(srv)
-	if err != nil {
-		logger.Fatal(err, "Server error: %+v", err)
+	svc.logger.Info(fmt.Sprintf("service attempting to listen on port %d", svc.cfg.port))
+	if err := svc.listenAndShutdown(srv); err != nil {
+		svc.logger.Error("server error", err)
+		os.Exit(1)
 	}
 }
 
 // Make makes a Service struct which wraps all callable methods encompassing the mock service
 func Make(cfg *SvcConfig) Service {
 	return &service{
-		cfg: cfg,
+		cfg:    cfg,
+		logger: newStructuredLogger(),
 	}
 }
 
@@ -182,30 +183,30 @@ func LoadConfigFromEnv() (*SvcConfig, error) {
 
 // LogConfiguration logs the configuration of the mock service
 func (svc *service) LogConfiguration() {
-	logger.Debug("Mock svc configuration:")
-	logger.Debug("API rate limit: %d requests per second", svc.cfg.rateLimit)
-	logger.Debug("Success ratio: %f", svc.cfg.successRatio)
-	logger.Debug("Supported sub routes: %s", svc.cfg.subRoutes)
-	logger.Debug("Supported methods: %s", svc.cfg.methods)
+	svc.logger.Debug("Mock svc configuration:")
+	svc.logger.Debug(fmt.Sprintf("API rate limit: %d requests per second", svc.cfg.rateLimit))
+	svc.logger.Debug(fmt.Sprintf("Success ratio: %f", svc.cfg.successRatio))
+	svc.logger.Debug(fmt.Sprintf("Supported sub routes: %s", svc.cfg.subRoutes))
+	svc.logger.Debug(fmt.Sprintf("Supported methods: %s", svc.cfg.methods))
 }
 
 // listenAndShutdown starts listening and serving the http requests asynchronously while at the same time listening for
 // sigterm signals from the OS. In case that the server is in a shutdown cycle, it give a grace period for existing
 // http requests to be served before fully closing down the server. This call is blocking.
-func listenAndShutdown(server *http.Server) error {
+func (svc *service) listenAndShutdown(server *http.Server) error {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		err := server.ListenAndServe()
-		if err != nil && err != http.ErrServerClosed {
-			logger.Fatal(err, "fail on listen")
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			svc.logger.Error("fail on listen", err)
+			os.Exit(1)
 		}
 	}()
-	logger.Info("server started")
+	svc.logger.Info("server started")
 
 	<-done
-	logger.Info("server stopped via sigterm")
+	svc.logger.Info("server stopped via sigterm")
 
 	ctx, cancel := context.WithTimeout(context.Background(), gracefulPeriod)
 	defer cancel()
@@ -215,7 +216,7 @@ func listenAndShutdown(server *http.Server) error {
 		return err
 	}
 
-	logger.Info("server exited properly")
+	svc.logger.Info("server exited properly")
 	return nil
 }
 
