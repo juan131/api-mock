@@ -36,17 +36,12 @@ func (svc *service) MakeRouter() {
 		middleware.Heartbeat("/ready"),
 		render.SetContentType(render.ContentTypeJSON),
 	)
-	router.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		render.Status(r, http.StatusNotFound)
-		render.JSON(w, r, map[string]interface{}{"success": false, "error": "not found"})
-	})
-	router.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
-		render.Status(r, http.StatusNotFound)
-		render.JSON(w, r, map[string]interface{}{"success": false, "error": "method not allowed"})
-	})
 
 	// Endpoints handled by the service
 	router.Route(uriPrefix, func(r chi.Router) {
+		r.NotFound(svc.handleNotFound)
+		r.MethodNotAllowed(svc.handleMethodNotAllowed)
+
 		r.Use(svc.RequestLogger())
 		if svc.cfg.apiToken != "" {
 			r.Use(authn.BearerTokenAuth(svc.cfg.apiToken))
@@ -54,10 +49,7 @@ func (svc *service) MakeRouter() {
 		r.Use(httprate.Limit(
 			svc.cfg.rateLimit, // requests
 			time.Second,       // per duration
-			httprate.WithLimitHandler(func(w http.ResponseWriter, r *http.Request) {
-				render.Status(r, http.StatusTooManyRequests)
-				render.JSON(w, r, svc.cfg.rateExceededRespBody)
-			}),
+			httprate.WithLimitHandler(svc.handleRateLimitExceeded),
 		))
 		r.Use(svc.incReqCounter())
 

@@ -47,20 +47,20 @@ func (svc *service) handleBatchMock(w http.ResponseWriter, r *http.Request) {
 	encodedBody, err := io.ReadAll(r.Body)
 	if err != nil {
 		logID := svc.LogRequestFailure(r, fmt.Sprintf("[handleBatchMock] body reading error: %+v", err), err)
-		renderJSON(w, r, http.StatusBadRequest, api.MakeHTTPErrorResponse("body parsing error", 1001, logID))
+		renderJSON(w, r, http.StatusBadRequest, api.MakeHTTPErrorResponse("body parsing error", api.CodeInvalidBody, logID))
 		return
 	}
 
 	decodedBody, err := url.ParseQuery(string(encodedBody))
 	if err != nil {
 		logID := svc.LogRequestFailure(r, fmt.Sprintf("[handleBatchMock] body reading error: %+v", err), err)
-		renderJSON(w, r, http.StatusBadRequest, api.MakeHTTPErrorResponse("body parsing error", 1001, logID))
+		renderJSON(w, r, http.StatusBadRequest, api.MakeHTTPErrorResponse("body parsing error", api.CodeInvalidBody, logID))
 		return
 	}
 
 	if err := json.Unmarshal([]byte(decodedBody.Get("batch")), &requests); err != nil {
 		logID := svc.LogRequestFailure(r, fmt.Sprintf("[handleBatchMock] body reading error: %+v", err), err)
-		renderJSON(w, r, http.StatusBadRequest, api.MakeHTTPErrorResponse("body parsing error", 1001, logID))
+		renderJSON(w, r, http.StatusBadRequest, api.MakeHTTPErrorResponse("body parsing error", api.CodeInvalidBody, logID))
 		return
 	}
 
@@ -91,6 +91,24 @@ func (svc *service) handleBatchMock(w http.ResponseWriter, r *http.Request) {
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, responses)
+}
+
+// handleNotFound handles not found requests
+func (svc *service) handleNotFound(w http.ResponseWriter, r *http.Request) {
+	logID := svc.LogRequestFailure(r, "[handleNotFound] request to "+r.URL.Path, nil)
+	renderJSON(w, r, http.StatusNotFound, api.MakeHTTPErrorResponse("not found", api.CodeNotFound, logID))
+}
+
+// handleMethodNotAllowed handles not found requests
+func (svc *service) handleMethodNotAllowed(w http.ResponseWriter, r *http.Request) {
+	logID := svc.LogRequestFailure(r, "[handleMethodNotAllowed] method "+r.Method, nil)
+	renderJSON(w, r, http.StatusNotFound, api.MakeHTTPErrorResponse("method not allowed", api.CodeMethodNotAllowed, logID))
+}
+
+// handleRateLimitExceeded handles rate limit exceeded requests
+func (svc *service) handleRateLimitExceeded(w http.ResponseWriter, r *http.Request) {
+	render.Status(r, http.StatusTooManyRequests)
+	render.JSON(w, r, svc.cfg.rateExceededRespBody)
 }
 
 // shouldFail returns true if the request should fail based
