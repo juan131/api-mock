@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/go-chi/render"
 
@@ -28,6 +29,11 @@ func (svc *service) incReqCounter() func(next http.Handler) http.Handler {
 // handleMock mocks request handling
 // Route: /v1/mock/*
 func (svc *service) handleMock(w http.ResponseWriter, r *http.Request) {
+	// Delay response
+	if svc.cfg.respDelay > 0 {
+		time.Sleep(svc.cfg.respDelay)
+	}
+
 	// Return failure based on success ratio and requests counter
 	if shouldFail(svc.cfg.successRatio, svc.reqCounter) {
 		render.Status(r, svc.cfg.failureCode)

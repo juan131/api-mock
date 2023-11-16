@@ -28,6 +28,7 @@ The API mock can be configured with the following environment variables:
 | Variable | Description | Default |
 | -------- | ----------- | ------- |
 | `PORT` | The port to listen on | `8080` |
+| `LOG_LEVEL` | The log level | `info` |
 | `API_TOKEN` | Bearer token to authenticate requests | `` |
 | `FAILURE_RESP_BODY` | The response body to return when mocking a failure | `{"success": "false"}` |
 | `FAILURE_RESP_CODE` | The HTTP status code to return when mocking a failure | `400` |
@@ -35,6 +36,7 @@ The API mock can be configured with the following environment variables:
 | `SUCCESS_RESP_CODE` | The HTTP status code to return when mocking a success | `200` |
 | `SUCCESS_RATIO` | The ratio of success to failure responses | `1.0` |
 | `METHODS` | The HTTP methods to mock | `GET,POST` |
+| `RESP_DELAY` | The response delay (in milliseconds) | `0` |
 | `SUB_ROUTES` | The sub routes to mock | `` |
 | `RATE_LIMIT` | The API rate limit (requests per second) | `1000` |
 | `RATE_EXCEEDED_RESP_BODY` | The response body to return when mocking a rate exceeded | `{"success": "false", "error": "rate limit exceeded"}` |

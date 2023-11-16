@@ -8,7 +8,7 @@ import (
 
 func Test_LoadConfigFromEnv(t *testing.T) {
 	type env struct {
-		port, apiToken, failureRespCode, failureRespBody, successRespCode, successRespBody, successRatio, rateLimit, rateExceededRespBody, methods, subRoutes string
+		port, apiToken, respDelay, failureRespCode, failureRespBody, successRespCode, successRespBody, successRatio, rateLimit, rateExceededRespBody, methods, subRoutes string
 	}
 	tests := []struct {
 		name    string
@@ -64,6 +64,14 @@ func Test_LoadConfigFromEnv(t *testing.T) {
 			name: "Invalid port",
 			env: env{
 				port: "not-a-number",
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "Invalid response delay",
+			env: env{
+				respDelay: "not-a-number",
 			},
 			want:    nil,
 			wantErr: true,
@@ -137,6 +145,7 @@ func Test_LoadConfigFromEnv(t *testing.T) {
 		t.Run(test.name, func(tt *testing.T) {
 			tt.Setenv("PORT", test.env.port)
 			tt.Setenv("API_TOKEN", test.env.apiToken)
+			tt.Setenv("RESP_DELAY", test.env.respDelay)
 			tt.Setenv("FAILURE_RESP_CODE", test.env.failureRespCode)
 			tt.Setenv("FAILURE_RESP_BODY", test.env.failureRespBody)
 			tt.Setenv("SUCCESS_RESP_CODE", test.env.successRespCode)
