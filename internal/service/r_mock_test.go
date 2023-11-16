@@ -225,6 +225,7 @@ func Test_handleNotFound(t *testing.T) {
 			},
 		},
 	}
+	t.Parallel()
 	for _, testToRun := range tests {
 		test := testToRun
 		t.Run(test.name, func(tt *testing.T) {
@@ -269,6 +270,7 @@ func Test_handleMethodNotAllowed(t *testing.T) {
 			},
 		},
 	}
+	t.Parallel()
 	for _, testToRun := range tests {
 		test := testToRun
 		t.Run(test.name, func(tt *testing.T) {
