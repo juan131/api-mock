@@ -44,6 +44,7 @@ type SvcConfig struct {
 	port                 int                    // server listening port
 	apiToken             string                 // api token
 	methods, subRoutes   []string               // supported sub-routes
+	respDelay            time.Duration          // response delay in milliseconds
 	failureCode          int                    // response code for failed requests
 	failureRespBody      map[string]interface{} // response body for failed requests
 	successCode          int                    // response code for successful requests
@@ -70,10 +71,22 @@ func (svc *service) ListenAndServe() {
 
 // Make makes a Service struct which wraps all callable methods encompassing the mock service
 func Make(cfg *SvcConfig) Service {
-	return &service{
-		cfg:    cfg,
-		logger: newStructuredLogger(),
+	svc := service{
+		cfg: cfg,
 	}
+
+	switch os.Getenv("LOG_LEVEL") {
+	case "debug":
+		svc.logger = newStructuredLogger(slog.LevelDebug)
+	case "warn":
+		svc.logger = newStructuredLogger(slog.LevelWarn)
+	case "error":
+		svc.logger = newStructuredLogger(slog.LevelError)
+	default:
+		svc.logger = newStructuredLogger(slog.LevelInfo)
+	}
+
+	return &svc
 }
 
 // LoadConfigFromEnv loads the configuration from the environment.
@@ -89,10 +102,23 @@ func LoadConfigFromEnv() (*SvcConfig, error) {
 	if portENV != "" {
 		svc.port, err = strconv.Atoi(portENV)
 		if err != nil {
-			return nil, fmt.Errorf("invalid port format for PORT: %w", err)
+			return nil, fmt.Errorf("invalid int format for PORT: %w", err)
 		}
 	} else {
 		svc.port = defaultPort
+	}
+
+	respDelayENV := os.Getenv("RESP_DELAY")
+	if respDelayENV != "" {
+		respDelayINT, err := strconv.Atoi(respDelayENV)
+		if err != nil {
+			return nil, fmt.Errorf("invalid int format for RESP_DELAY: %w", err)
+		}
+
+		svc.respDelay = time.Duration(respDelayINT) * time.Millisecond
+		if svc.respDelay > 30*time.Second {
+			return nil, fmt.Errorf("RESP_DELAY cannot be greater than 30 seconds")
+		}
 	}
 
 	failureCodeEnv := os.Getenv("FAILURE_RESP_CODE")

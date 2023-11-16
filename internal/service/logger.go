@@ -10,9 +10,10 @@ import (
 )
 
 // newStructuredLogger creates a new structured logger compatible with GCP logging syntax
-func newStructuredLogger() *slog.Logger {
+func newStructuredLogger(level slog.Level) *slog.Logger {
 	return slog.New(
 		slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
+			Level: level,
 			ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
 				switch a.Key {
 				case slog.LevelKey:

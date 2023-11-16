@@ -3,6 +3,7 @@ package service
 import (
 	"bytes"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -23,7 +24,7 @@ func Test_service_handleMock(t *testing.T) {
 			methods:         []string{http.MethodGet},
 			subRoutes:       []string{"/foo"},
 		},
-		logger: newStructuredLogger(),
+		logger: newStructuredLogger(slog.LevelDebug),
 	}
 
 	tests := []struct {
@@ -129,7 +130,7 @@ func Test_service_handleBatchMock(t *testing.T) {
 			methods:         []string{http.MethodGet},
 			subRoutes:       []string{"/foo"},
 		},
-		logger: newStructuredLogger(),
+		logger: newStructuredLogger(slog.LevelDebug),
 	}
 
 	tests := []struct {
@@ -194,7 +195,7 @@ func Test_service_handleBatchMock(t *testing.T) {
 
 func Test_handleNotFound(t *testing.T) {
 	svc := &service{
-		logger: newStructuredLogger(),
+		logger: newStructuredLogger(slog.LevelDebug),
 	}
 	tests := []struct {
 		name         string
@@ -239,7 +240,7 @@ func Test_handleNotFound(t *testing.T) {
 
 func Test_handleMethodNotAllowed(t *testing.T) {
 	svc := &service{
-		logger: newStructuredLogger(),
+		logger: newStructuredLogger(slog.LevelDebug),
 	}
 	tests := []struct {
 		name         string
