@@ -192,6 +192,96 @@ func Test_service_handleBatchMock(t *testing.T) {
 	}
 }
 
+func Test_handleNotFound(t *testing.T) {
+	svc := &service{
+		logger: newStructuredLogger(),
+	}
+	tests := []struct {
+		name         string
+		setupRequest func() *http.Request
+		respHandler  func(tt *testing.T, resp *httptest.ResponseRecorder)
+	}{
+		{
+			name: "request to unknown route",
+			setupRequest: func() *http.Request {
+				req := httptest.NewRequest(http.MethodGet, "/v1/mock/unknown", nil)
+				return req
+			},
+			respHandler: func(tt *testing.T, resp *httptest.ResponseRecorder) {
+				if resp.Code != http.StatusNotFound {
+					tt.Errorf("expected status code %d, got %d", http.StatusNotFound, resp.Code)
+				}
+				if resp.Header().Get("Content-Type") != "application/json" {
+					tt.Errorf("expected content type %s, got %s", "application/json", resp.Header().Get("Content-Type"))
+				}
+				var errorResponse api.HTTPErrorResponse
+				if err := json.Unmarshal(resp.Body.Bytes(), &errorResponse); err != nil {
+					tt.Errorf("could not unmarshal response body: %+v", err)
+				}
+
+				if errorResponse.Error.Message != "not found" || errorResponse.Error.Code != api.CodeNotFound {
+					tt.Errorf("expected error message %s and code %d, got %s and %d", "not found", api.CodeNotFound, errorResponse.Error.Message, errorResponse.Error.Code)
+				}
+			},
+		},
+	}
+	t.Parallel()
+	for _, testToRun := range tests {
+		test := testToRun
+		t.Run(test.name, func(tt *testing.T) {
+			tt.Parallel()
+			resp := httptest.NewRecorder()
+			svc.handleNotFound(resp, test.setupRequest())
+			test.respHandler(tt, resp)
+		})
+	}
+}
+
+func Test_handleMethodNotAllowed(t *testing.T) {
+	svc := &service{
+		logger: newStructuredLogger(),
+	}
+	tests := []struct {
+		name         string
+		setupRequest func() *http.Request
+		respHandler  func(tt *testing.T, resp *httptest.ResponseRecorder)
+	}{
+		{
+			name: "request to unknown route",
+			setupRequest: func() *http.Request {
+				req := httptest.NewRequest(http.MethodGet, "/v1/mock/unknown", nil)
+				return req
+			},
+			respHandler: func(tt *testing.T, resp *httptest.ResponseRecorder) {
+				if resp.Code != http.StatusNotFound {
+					tt.Errorf("expected status code %d, got %d", http.StatusNotFound, resp.Code)
+				}
+				if resp.Header().Get("Content-Type") != "application/json" {
+					tt.Errorf("expected content type %s, got %s", "application/json", resp.Header().Get("Content-Type"))
+				}
+				var errorResponse api.HTTPErrorResponse
+				if err := json.Unmarshal(resp.Body.Bytes(), &errorResponse); err != nil {
+					tt.Errorf("could not unmarshal response body: %+v", err)
+				}
+
+				if errorResponse.Error.Message != "method not allowed" || errorResponse.Error.Code != api.CodeMethodNotAllowed {
+					tt.Errorf("expected error message %s and code %d, got %s and %d", "method not allowed", api.CodeMethodNotAllowed, errorResponse.Error.Message, errorResponse.Error.Code)
+				}
+			},
+		},
+	}
+	t.Parallel()
+	for _, testToRun := range tests {
+		test := testToRun
+		t.Run(test.name, func(tt *testing.T) {
+			tt.Parallel()
+			resp := httptest.NewRecorder()
+			svc.handleMethodNotAllowed(resp, test.setupRequest())
+			test.respHandler(tt, resp)
+		})
+	}
+}
+
 func Test_shouldFail(t *testing.T) {
 	type args struct {
 		successRatio    float64
