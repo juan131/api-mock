@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/render"
@@ -37,7 +39,11 @@ func (svc *service) handleMock(w http.ResponseWriter, r *http.Request) {
 	// Return failure based on success ratio and requests counter
 	if shouldFail(svc.cfg.successRatio, svc.reqCounter) {
 		render.Status(r, svc.cfg.failureCode)
-		render.JSON(w, r, svc.cfg.failureRespBody)
+		if svc.cfg.failureRespBody != nil {
+			render.JSON(w, r, svc.cfg.failureRespBody)
+		} else {
+			render.JSON(w, r, api.MakeHTTPErrorResponse("failed request", api.CodeFailedRequest, strconv.FormatUint(rand.Uint64(), 16)))
+		}
 		return
 	}
 
@@ -74,7 +80,12 @@ func (svc *service) handleBatchMock(w http.ResponseWriter, r *http.Request) {
 	for _, r := range requests {
 		svc.logger.Info(fmt.Sprintf("Individual request: %v", r))
 		if shouldFail(svc.cfg.successRatio, svc.reqCounter) {
-			body, err := json.Marshal(svc.cfg.failureRespBody)
+			var body []byte
+			if svc.cfg.failureRespBody != nil {
+				body, err = json.Marshal(svc.cfg.failureRespBody)
+			} else {
+				body, err = json.Marshal(api.MakeHTTPErrorResponse("failed request", api.CodeFailedRequest, strconv.FormatUint(rand.Uint64(), 16)))
+			}
 			if err != nil {
 				continue
 			}
@@ -113,8 +124,12 @@ func (svc *service) handleMethodNotAllowed(w http.ResponseWriter, r *http.Reques
 
 // handleRateLimitExceeded handles rate limit exceeded requests
 func (svc *service) handleRateLimitExceeded(w http.ResponseWriter, r *http.Request) {
-	render.Status(r, http.StatusTooManyRequests)
-	render.JSON(w, r, svc.cfg.rateExceededRespBody)
+	logID := svc.LogRequestFailure(r, "rate limit exceeded", nil)
+	if svc.cfg.rateExceededRespBody != nil {
+		renderJSON(w, r, http.StatusTooManyRequests, svc.cfg.rateExceededRespBody)
+	} else {
+		renderJSON(w, r, http.StatusTooManyRequests, api.MakeHTTPErrorResponse("rate limit exceeded", api.CodeRateLimitExceeded, logID))
+	}
 }
 
 // shouldFail returns true if the request should fail based

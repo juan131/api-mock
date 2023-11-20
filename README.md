@@ -30,7 +30,7 @@ The API mock can be configured with the following environment variables:
 | `PORT` | The port to listen on | `8080` |
 | `LOG_LEVEL` | The log level | `info` |
 | `API_TOKEN` | Bearer token to authenticate requests | `` |
-| `FAILURE_RESP_BODY` | The response body to return when mocking a failure | `{"success": "false"}` |
+| `FAILURE_RESP_BODY` | The response body to return when mocking a failure | `{"error":{"message":"failed request","code":1005,"id":"[random-value]"}}` |
 | `FAILURE_RESP_CODE` | The HTTP status code to return when mocking a failure | `400` |
 | `SUCCESS_RESP_BODY` | The response body to return when mocking a success | `{"success": "true"}` |
 | `SUCCESS_RESP_CODE` | The HTTP status code to return when mocking a success | `200` |
@@ -39,7 +39,7 @@ The API mock can be configured with the following environment variables:
 | `RESP_DELAY` | The response delay (in milliseconds) | `0` |
 | `SUB_ROUTES` | The sub routes to mock | `` |
 | `RATE_LIMIT` | The API rate limit (requests per second) | `1000` |
-| `RATE_EXCEEDED_RESP_BODY` | The response body to return when mocking a rate exceeded | `{"success": "false", "error": "rate limit exceeded"}` |
+| `RATE_EXCEEDED_RESP_BODY` | The response body to return when mocking a rate exceeded | `{"error":{"message":"rate limit exceeded","code":1004,"id":"[random-value]"}}` |
 
 ## Build
 

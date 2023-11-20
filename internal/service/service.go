@@ -2,14 +2,11 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -17,18 +14,15 @@ import (
 	"github.com/go-chi/chi"
 )
 
-const (
-	defaultPort    = 8080
-	gracefulPeriod = time.Second * 30
-)
+const gracefulPeriod = time.Second * 30
 
 type Service interface {
 	// ListenAndServe listens and serves the http requests
 	ListenAndServe()
 	// MakeRouter initializes a http router
 	MakeRouter()
-	// LogConfiguration logs the service configuration
-	LogConfiguration()
+	// LoadConfig loads the configuration from the environment
+	LoadConfig() error
 }
 
 type service struct {
@@ -54,6 +48,20 @@ type SvcConfig struct {
 	rateExceededRespBody map[string]interface{} // response body for rate exceeded requests
 }
 
+// NewService creates a new service
+func NewService() Service {
+	switch os.Getenv("LOG_LEVEL") {
+	case "debug":
+		return &service{logger: newStructuredLogger(slog.LevelDebug)}
+	case "warn":
+		return &service{logger: newStructuredLogger(slog.LevelWarn)}
+	case "error":
+		return &service{logger: newStructuredLogger(slog.LevelError)}
+	default:
+		return &service{logger: newStructuredLogger(slog.LevelInfo)}
+	}
+}
+
 // ListenAndServe listens and serves the http requests
 func (svc *service) ListenAndServe() {
 	// Listen and serve
@@ -69,151 +77,21 @@ func (svc *service) ListenAndServe() {
 	}
 }
 
-// Make makes a Service struct which wraps all callable methods encompassing the mock service
-func Make(cfg *SvcConfig) Service {
-	svc := service{
-		cfg: cfg,
-	}
-
-	switch os.Getenv("LOG_LEVEL") {
-	case "debug":
-		svc.logger = newStructuredLogger(slog.LevelDebug)
-	case "warn":
-		svc.logger = newStructuredLogger(slog.LevelWarn)
-	case "error":
-		svc.logger = newStructuredLogger(slog.LevelError)
-	default:
-		svc.logger = newStructuredLogger(slog.LevelInfo)
-	}
-
-	return &svc
-}
-
-// LoadConfigFromEnv loads the configuration from the environment.
-//
-//nolint:cyclop // many env variables to parse
-func LoadConfigFromEnv() (*SvcConfig, error) {
+// LoadConfig loads the service configuration
+func (svc *service) LoadConfig() error {
 	var err error
-	svc := SvcConfig{
-		apiToken: os.Getenv("API_TOKEN"),
+	svc.cfg, err = loadConfigFromEnv()
+	if err != nil {
+		return err
 	}
 
-	portENV := os.Getenv("PORT")
-	if portENV != "" {
-		svc.port, err = strconv.Atoi(portENV)
-		if err != nil {
-			return nil, fmt.Errorf("invalid int format for PORT: %w", err)
-		}
-	} else {
-		svc.port = defaultPort
-	}
-
-	respDelayENV := os.Getenv("RESP_DELAY")
-	if respDelayENV != "" {
-		respDelayINT, err := strconv.Atoi(respDelayENV)
-		if err != nil {
-			return nil, fmt.Errorf("invalid int format for RESP_DELAY: %w", err)
-		}
-
-		svc.respDelay = time.Duration(respDelayINT) * time.Millisecond
-		if svc.respDelay > 30*time.Second {
-			return nil, fmt.Errorf("RESP_DELAY cannot be greater than 30 seconds")
-		}
-	}
-
-	failureCodeEnv := os.Getenv("FAILURE_RESP_CODE")
-	if failureCodeEnv != "" {
-		svc.failureCode, err = strconv.Atoi(failureCodeEnv)
-		if err != nil {
-			return nil, fmt.Errorf("invalid int format for FAILURE_RESP_CODE: %w", err)
-		}
-	} else {
-		svc.failureCode = http.StatusBadRequest // default response code
-	}
-
-	failureRespBodyEnv := os.Getenv("FAILURE_RESP_BODY")
-	if failureRespBodyEnv != "" {
-		if err = json.Unmarshal([]byte(failureRespBodyEnv), &svc.failureRespBody); err != nil {
-			return nil, fmt.Errorf("invalid json format for FAILURE_RESP_BODY: %w", err)
-		}
-	} else {
-		svc.failureRespBody = map[string]interface{}{"success": false} // default response body
-	}
-
-	successCodeEnv := os.Getenv("SUCCESS_RESP_CODE")
-	if successCodeEnv != "" {
-		svc.successCode, err = strconv.Atoi(successCodeEnv)
-		if err != nil {
-			return nil, fmt.Errorf("invalid int format for SUCCESS_RESP_CODE: %w", err)
-		}
-	} else {
-		svc.successCode = http.StatusOK // default response code
-	}
-
-	successRepBodyEnv := os.Getenv("SUCCESS_RESP_BODY")
-	if successRepBodyEnv != "" {
-		if err = json.Unmarshal([]byte(successRepBodyEnv), &svc.successRespBody); err != nil {
-			return nil, fmt.Errorf("invalid json format for SUCCESS_RESP_BODY: %w", err)
-		}
-	} else {
-		svc.successRespBody = map[string]interface{}{"success": true} // default response body
-	}
-
-	successRatioEnv := os.Getenv("SUCCESS_RATIO")
-	if successRatioEnv != "" {
-		svc.successRatio, err = strconv.ParseFloat(successRatioEnv, 64)
-		if err != nil || svc.successRatio <= 0 || svc.successRatio > 1 {
-			return nil, fmt.Errorf("invalid value for SUCCESS_RATIO")
-		}
-	} else {
-		svc.successRatio = 1.0 // default success ratio
-	}
-
-	rateLimitEnv := os.Getenv("RATE_LIMIT")
-	if rateLimitEnv != "" {
-		svc.rateLimit, err = strconv.Atoi(rateLimitEnv)
-		if err != nil {
-			return nil, fmt.Errorf("invalid int format for RATE_LIMIT")
-		}
-	} else {
-		svc.rateLimit = 1000 // default rate limit: 1000 requests per second
-	}
-
-	rateExceededRespBodyEnv := os.Getenv("RATE_EXCEEDED_RESP_BODY")
-	if rateExceededRespBodyEnv != "" {
-		if err = json.Unmarshal([]byte(rateExceededRespBodyEnv), &svc.rateExceededRespBody); err != nil {
-			return nil, fmt.Errorf("invalid json format for RATE_EXCEEDED_RESP_BODY: %w", err)
-		}
-	} else {
-		svc.rateExceededRespBody = map[string]interface{}{"success": false, "error": "rate limit exceeded"} // default response body
-	}
-
-	methodsEnv := os.Getenv("METHODS")
-	if methodsEnv != "" {
-		allowedMethods := []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodPatch}
-		svc.methods = strings.Split(methodsEnv, ",")
-		for _, method := range svc.methods {
-			if !stringSliceContains(allowedMethods, method) {
-				return nil, fmt.Errorf("method %s is not allowed", method)
-			}
-		}
-	}
-
-	subRoutesEnv := os.Getenv("SUB_ROUTES")
-	if subRoutesEnv != "" {
-		svc.subRoutes = strings.Split(subRoutesEnv, ",")
-	}
-
-	return &svc, nil
-}
-
-// LogConfiguration logs the configuration of the mock service
-func (svc *service) LogConfiguration() {
 	svc.logger.Debug("Mock svc configuration:")
 	svc.logger.Debug(fmt.Sprintf("API rate limit: %d requests per second", svc.cfg.rateLimit))
 	svc.logger.Debug(fmt.Sprintf("Success ratio: %f", svc.cfg.successRatio))
 	svc.logger.Debug(fmt.Sprintf("Supported sub routes: %s", svc.cfg.subRoutes))
 	svc.logger.Debug(fmt.Sprintf("Supported methods: %s", svc.cfg.methods))
+
+	return nil
 }
 
 // listenAndShutdown starts listening and serving the http requests asynchronously while at the same time listening for
@@ -244,14 +122,4 @@ func (svc *service) listenAndShutdown(server *http.Server) error {
 
 	svc.logger.Info("server exited properly")
 	return nil
-}
-
-// stringSliceContains is a helper function to detect whether a string slice contains a string or not
-func stringSliceContains(s []string, e string) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
 }
