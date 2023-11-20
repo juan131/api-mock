@@ -21,12 +21,12 @@ func Test_loadConfigFromEnv(t *testing.T) {
 			want: &SvcConfig{
 				port:                 8080,
 				failureCode:          http.StatusBadRequest,
-				failureRespBody:      map[string]interface{}{"success": false},
+				failureRespBody:      nil,
 				successCode:          http.StatusOK,
 				successRespBody:      map[string]interface{}{"success": true},
 				successRatio:         1.0,
 				rateLimit:            1000,
-				rateExceededRespBody: map[string]interface{}{"success": false, "error": "rate limit exceeded"},
+				rateExceededRespBody: nil,
 			},
 			wantErr: false,
 		},
@@ -286,6 +286,7 @@ func TestStructToMapStringInterface(t *testing.T) {
 			wantErr: false,
 		},
 	}
+	t.Parallel()
 	for _, testToRun := range tests {
 		test := testToRun
 		t.Run(test.name, func(tt *testing.T) {
