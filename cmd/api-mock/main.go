@@ -8,15 +8,12 @@ import (
 
 func main() {
 	// Init service
-	svcCfg, err := service.LoadConfigFromEnv()
-	if err != nil {
+	svc := service.NewService()
+	if err := svc.LoadConfig(); err != nil {
 		log.Fatal(err)
 	}
 
-	svc := service.Make(svcCfg)
-	svc.LogConfiguration()
-	svc.MakeRouter()
-
 	// Start service
+	svc.MakeRouter()
 	svc.ListenAndServe()
 }
