@@ -26,26 +26,11 @@ type Service interface {
 }
 
 type service struct {
-	cfg        *SvcConfig   // service configuration
+	cfg        *config      // service configuration
 	router     *chi.Mux     // http router
 	reqCounter int          // request counter
 	mu         sync.Mutex   // Mutual exclusion lock
 	logger     *slog.Logger // logger
-}
-
-// SvcConfig is the service configuration
-type SvcConfig struct {
-	port                 int                    // server listening port
-	apiToken             string                 // api token
-	methods, subRoutes   []string               // supported sub-routes
-	respDelay            time.Duration          // response delay in milliseconds
-	failureCode          int                    // response code for failed requests
-	failureRespBody      map[string]interface{} // response body for failed requests
-	successCode          int                    // response code for successful requests
-	successRespBody      map[string]interface{} // response body for successful requests
-	successRatio         float64                // ratio of successful requests
-	rateLimit            int                    // rate limit (requests per second)
-	rateExceededRespBody map[string]interface{} // response body for rate exceeded requests
 }
 
 // NewService creates a new service

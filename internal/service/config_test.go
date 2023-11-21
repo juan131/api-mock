@@ -8,17 +8,17 @@ import (
 
 func Test_loadConfigFromEnv(t *testing.T) {
 	type env struct {
-		port, apiToken, respDelay, failureRespCode, failureRespBody, successRespCode, successRespBody, successRatio, rateLimit, rateExceededRespBody, methods, subRoutes string
+		port, apiKey, apiToken, respDelay, failureRespCode, failureRespBody, successRespCode, successRespBody, successRatio, rateLimit, rateExceededRespBody, methods, subRoutes string
 	}
 	tests := []struct {
 		name    string
 		env     env
-		want    *SvcConfig
+		want    *config
 		wantErr bool
 	}{
 		{
 			name: "Valid configuration (defaults)",
-			want: &SvcConfig{
+			want: &config{
 				port:                 8080,
 				failureCode:          http.StatusBadRequest,
 				failureRespBody:      nil,
@@ -45,7 +45,7 @@ func Test_loadConfigFromEnv(t *testing.T) {
 				methods:              "GET,POST,PUT",
 				subRoutes:            "/foo,/bar",
 			},
-			want: &SvcConfig{
+			want: &config{
 				port:                 8080,
 				apiToken:             "some-token",
 				failureCode:          http.StatusBadRequest,
@@ -59,6 +59,15 @@ func Test_loadConfigFromEnv(t *testing.T) {
 				subRoutes:            []string{"/foo", "/bar"},
 			},
 			wantErr: false,
+		},
+		{
+			name: "Both API key and token set",
+			env: env{
+				apiKey:   "some-key",
+				apiToken: "some-token",
+			},
+			want:    nil,
+			wantErr: true,
 		},
 		{
 			name: "Invalid port",
@@ -144,6 +153,7 @@ func Test_loadConfigFromEnv(t *testing.T) {
 		test := testToRun
 		t.Run(test.name, func(tt *testing.T) {
 			tt.Setenv("PORT", test.env.port)
+			tt.Setenv("API_KEY", test.env.apiKey)
 			tt.Setenv("API_TOKEN", test.env.apiToken)
 			tt.Setenv("RESP_DELAY", test.env.respDelay)
 			tt.Setenv("FAILURE_RESP_CODE", test.env.failureRespCode)

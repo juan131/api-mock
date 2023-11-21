@@ -15,7 +15,7 @@ import (
 
 func Test_service_handleMock(t *testing.T) {
 	svc := &service{
-		cfg: &SvcConfig{
+		cfg: &config{
 			failureCode:     http.StatusBadRequest,
 			successRespBody: map[string]interface{}{"success": true},
 			successCode:     http.StatusOK,
@@ -125,7 +125,7 @@ func Test_service_handleBatchMock(t *testing.T) {
 		{
 			name: "success batch request with custom response body",
 			svc: &service{
-				cfg: &SvcConfig{
+				cfg: &config{
 					failureCode:     http.StatusBadRequest,
 					successRespBody: map[string]interface{}{"success": true},
 					successCode:     http.StatusOK,
@@ -192,7 +192,7 @@ func Test_service_handleBatchMock(t *testing.T) {
 		{
 			name: "success batch request with custom failure response body",
 			svc: &service{
-				cfg: &SvcConfig{
+				cfg: &config{
 					failureRespBody: map[string]interface{}{"success": false},
 					failureCode:     http.StatusBadRequest,
 					successRespBody: map[string]interface{}{"success": true},
@@ -359,7 +359,7 @@ func Test_handleRateLimitExceeded(t *testing.T) {
 			name: "request limit exceeded with default response body",
 			svc: &service{
 				logger: newStructuredLogger(slog.LevelDebug),
-				cfg:    &SvcConfig{},
+				cfg:    &config{},
 			},
 			setupRequest: func() *http.Request {
 				req := httptest.NewRequest(http.MethodGet, "/v1/mock/unknown", nil)
@@ -386,7 +386,7 @@ func Test_handleRateLimitExceeded(t *testing.T) {
 			name: "request limit exceeded with custom response body",
 			svc: &service{
 				logger: newStructuredLogger(slog.LevelDebug),
-				cfg: &SvcConfig{
+				cfg: &config{
 					rateExceededRespBody: map[string]interface{}{"success": false},
 				},
 			},
