@@ -4,6 +4,11 @@ Latest release:
 
 [![](https://img.shields.io/github/release/juan131/api-mock.svg)](https://github.com/juan131/api-mock/releases/latest)
 
+## v0.4.0
+
+- Added support for custom API key authentication.
+- PI error messages to follow standard by default.
+
 ## v0.3.0
 
 - Added support for delayed responses.
