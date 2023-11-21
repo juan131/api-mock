@@ -43,6 +43,9 @@ func (svc *service) MakeRouter() {
 		r.MethodNotAllowed(svc.handleMethodNotAllowed)
 
 		r.Use(svc.RequestLogger())
+		if svc.cfg.apiKey != "" {
+			r.Use(authn.ApiKeyAuth(svc.cfg.apiKey))
+		}
 		if svc.cfg.apiToken != "" {
 			r.Use(authn.BearerTokenAuth(svc.cfg.apiToken))
 		}

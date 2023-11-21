@@ -29,6 +29,7 @@ The API mock can be configured with the following environment variables:
 | -------- | ----------- | ------- |
 | `PORT` | The port to listen on | `8080` |
 | `LOG_LEVEL` | The log level | `info` |
+| `API_KEY` | API key to authenticate requests via `X-API-KEY` header | `` |
 | `API_TOKEN` | Bearer token to authenticate requests | `` |
 | `FAILURE_RESP_BODY` | The response body to return when mocking a failure | `{"error":{"message":"failed request","code":1005,"id":"[random-value]"}}` |
 | `FAILURE_RESP_CODE` | The HTTP status code to return when mocking a failure | `400` |

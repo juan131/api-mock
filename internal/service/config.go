@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -17,13 +18,34 @@ const (
 	defaultRatio     float64 = 1.0
 )
 
+// config is the service configuration
+type config struct {
+	port                 int                    // server listening port
+	apiKey               string                 // api key
+	apiToken             string                 // api token
+	methods, subRoutes   []string               // supported sub-routes
+	respDelay            time.Duration          // response delay in milliseconds
+	failureCode          int                    // response code for failed requests
+	failureRespBody      map[string]interface{} // response body for failed requests
+	successCode          int                    // response code for successful requests
+	successRespBody      map[string]interface{} // response body for successful requests
+	successRatio         float64                // ratio of successful requests
+	rateLimit            int                    // rate limit (requests per second)
+	rateExceededRespBody map[string]interface{} // response body for rate exceeded requests
+}
+
 // loadConfigFromEnv loads the configuration from the environment.
 //
 //nolint:cyclop // many env variables to parse
-func loadConfigFromEnv() (*SvcConfig, error) {
+func loadConfigFromEnv() (*config, error) {
 	var err error
-	cfg := SvcConfig{
+	cfg := config{
+		apiKey:   os.Getenv("API_KEY"),
 		apiToken: os.Getenv("API_TOKEN"),
+	}
+
+	if cfg.apiKey != "" && cfg.apiToken != "" {
+		return nil, errors.New("only one of API_KEY or API_TOKEN can be set")
 	}
 
 	portENV := os.Getenv("PORT")
