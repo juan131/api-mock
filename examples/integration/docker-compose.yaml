@@ -1,0 +1,20 @@
+version: '3.5'
+
+services:
+  api-mock:
+    image: docker.io/juanariza131/api-mock:latest
+    environment:
+      API_KEY: some-api-key
+      LOG_LEVEL: debug
+      RATE_LIMIT: 100
+      SUCCESS_RATIO: 0.5
+      SUCCESS_RESP_BODY: "{\"message\": \"success\"}"
+      SUB_ROUTES: "/foo,/bar"
+  cypress:
+    image: cypress/included:10.6.0
+    depends_on:
+      api-mock:
+        condition: service_started
+    working_dir: /e2e
+    volumes:
+      - ./:/e2e
