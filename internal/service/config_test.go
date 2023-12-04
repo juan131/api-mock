@@ -2,8 +2,9 @@ package service
 
 import (
 	"net/http"
-	"reflect"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func Test_loadConfigFromEnv(t *testing.T) {
@@ -170,7 +171,7 @@ func Test_loadConfigFromEnv(t *testing.T) {
 			if (err != nil) != test.wantErr {
 				t.Errorf("LoadConfigFromEnv() error = %v, wantErr %v", err, test.wantErr)
 			}
-			if !reflect.DeepEqual(got, test.want) {
+			if !cmp.Equal(got, test.want, cmp.AllowUnexported(config{})) {
 				t.Errorf("LoadConfigFromEnv() = %v, want %v", got, test.want)
 			}
 		})
@@ -306,7 +307,7 @@ func TestStructToMapStringInterface(t *testing.T) {
 				tt.Errorf("StructToMapStringInterface() error = %v, wantErr %v", err, test.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, test.want) {
+			if !cmp.Equal(got, test.want) {
 				tt.Errorf("StructToMapStringInterface() = %v, want %v", got, test.want)
 			}
 		})
