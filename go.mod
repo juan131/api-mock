@@ -7,6 +7,7 @@ require (
 	github.com/go-chi/cors v1.2.1
 	github.com/go-chi/httprate v0.7.4
 	github.com/go-chi/render v1.0.3
+	github.com/google/go-cmp v0.6.0
 )
 
 require (
