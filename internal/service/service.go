@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 )
 
 const gracefulPeriod = time.Second * 30
@@ -57,7 +57,7 @@ func (svc *service) ListenAndServe() {
 	}
 	svc.logger.Info(fmt.Sprintf("service attempting to listen on port %d", svc.cfg.port))
 	if err := svc.listenAndShutdown(srv); err != nil {
-		svc.logger.Error("server error", err)
+		svc.logger.Error("server error", "error", err)
 		os.Exit(1)
 	}
 }
@@ -88,7 +88,7 @@ func (svc *service) listenAndShutdown(server *http.Server) error {
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			svc.logger.Error("fail on listen", err)
+			svc.logger.Error("fail on listen", "error", err)
 			os.Exit(1)
 		}
 	}()
