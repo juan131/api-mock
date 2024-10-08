@@ -4,6 +4,10 @@ Latest release:
 
 [![](https://img.shields.io/github/release/juan131/api-mock.svg)](https://github.com/juan131/api-mock/releases/latest)
 
+## v0.4.1
+
+- Bump Go version and update dependencies.
+
 ## v0.4.0
 
 - Added support for custom API key authentication.
